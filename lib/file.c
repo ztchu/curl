@@ -306,8 +306,9 @@ static CURLcode file_upload(struct connectdata *conn)
   while(!result) {
     size_t nread;
     size_t nwrite;
-    int readcount;
-    result = Curl_fillreadbuffer(conn, (int)data->set.buffer_size, &readcount);
+    size_t readcount;
+    result = Curl_fillreadbuffer(conn, (size_t)data->set.buffer_size,
+                                 &readcount);
     if(result)
       break;
 

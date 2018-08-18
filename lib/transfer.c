@@ -120,7 +120,8 @@ CURLcode Curl_get_upload_buffer(struct Curl_easy *data)
  * This function will call the read callback to fill our buffer with data
  * to upload.
  */
-CURLcode Curl_fillreadbuffer(struct connectdata *conn, int bytes, int *nreadp)
+CURLcode Curl_fillreadbuffer(struct connectdata *conn, size_t bytes,
+                             size_t *nreadp)
 {
   struct Curl_easy *data = conn->data;
   size_t buffersize = (size_t)bytes;
@@ -933,7 +934,7 @@ static CURLcode readwrite_upload(struct Curl_easy *data,
       if(!k->upload_done) {
         /* HTTP pollution, this should be written nicer to become more
            protocol agnostic. */
-        int fillcount;
+        size_t fillcount;
         struct HTTP *http = k->protop;
 
         if((k->exp100 == EXP100_SENDING_REQUEST) &&
@@ -960,7 +961,8 @@ static CURLcode readwrite_upload(struct Curl_easy *data,
             sending_http_headers = FALSE;
         }
 
-        result = Curl_fillreadbuffer(conn, UPLOAD_BUFSIZE, &fillcount);
+        result = Curl_fillreadbuffer(conn, data->set.upload_buffer_size,
+                                     &fillcount);
         if(result)
           return result;
 
@@ -992,7 +994,7 @@ static CURLcode readwrite_upload(struct Curl_easy *data,
          (data->set.crlf))) {
         /* Do we need to allocate a scratch buffer? */
         if(!data->state.scratch) {
-          data->state.scratch = malloc(2 * UPLOAD_BUFSIZE);
+          data->state.scratch = malloc(2 * data->set.upload_buffer_size);
           if(!data->state.scratch) {
             failf(data, "Failed to alloc scratch buffer!");
 
