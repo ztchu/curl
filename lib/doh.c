@@ -189,8 +189,10 @@ static CURLcode dohprobe(struct Curl_easy *data,
   p->dnstype = dnstype;
   p->serverdoh.memory = malloc(1);  /* will be grown as needed by realloc in
                                        the doh_write_cb function */
-  if(!p->serverdoh.memory)
+  if(!p->serverdoh.memory) {
+    result = CURLE_OUT_OF_MEMORY;
     goto error;
+  }
   p->serverdoh.size = 0;
 
   if(data->set.doh_get) {
