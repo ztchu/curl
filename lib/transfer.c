@@ -120,11 +120,12 @@ CURLcode Curl_get_upload_buffer(struct Curl_easy *data)
  * This function will call the read callback to fill our buffer with data
  * to upload.
  */
-CURLcode Curl_fillreadbuffer(struct connectdata *conn, int bytes, int *nreadp)
+CURLcode Curl_fillreadbuffer(struct connectdata *conn, size_t bytes,
+                             size_t *nreadp)
 {
   struct Curl_easy *data = conn->data;
   size_t buffersize = (size_t)bytes;
-  int nread;
+  size_t nread;
 #ifdef CURL_DOES_CONVERSIONS
   bool sending_http_headers = FALSE;
 
@@ -147,8 +148,8 @@ CURLcode Curl_fillreadbuffer(struct connectdata *conn, int bytes, int *nreadp)
   /* this function returns a size_t, so we typecast to int to prevent warnings
      with picky compilers */
   Curl_set_in_callback(data, true);
-  nread = (int)data->state.fread_func(data->req.upload_fromhere, 1,
-                                      buffersize, data->state.in);
+  nread = data->state.fread_func(data->req.upload_fromhere, 1,
+                                 buffersize, data->state.in);
   Curl_set_in_callback(data, false);
 
   if(nread == CURL_READFUNC_ABORT) {
@@ -236,13 +237,13 @@ CURLcode Curl_fillreadbuffer(struct connectdata *conn, int bytes, int *nreadp)
 #ifdef CURL_DOES_CONVERSIONS
     {
       CURLcode result;
-      int length;
+      size_t length;
       if(data->set.prefer_ascii)
         /* translate the protocol and data */
         length = nread;
       else
         /* just translate the protocol portion */
-        length = (int)strlen(hexbuffer);
+        length = strlen(hexbuffer);
       result = Curl_convert_to_network(data, data->req.upload_fromhere,
                                        length);
       /* Curl_convert_to_network calls failf if unsuccessful */
@@ -257,7 +258,7 @@ CURLcode Curl_fillreadbuffer(struct connectdata *conn, int bytes, int *nreadp)
       infof(data, "Signaling end of chunked upload via terminating chunk.\n");
     }
 
-    nread += (int)strlen(endofline_native); /* for the added end of line */
+    nread += strlen(endofline_native); /* for the added end of line */
   }
 #ifdef CURL_DOES_CONVERSIONS
   else if((data->set.prefer_ascii) && (!sending_http_headers)) {
@@ -933,7 +934,7 @@ static CURLcode readwrite_upload(struct Curl_easy *data,
       if(!k->upload_done) {
         /* HTTP pollution, this should be written nicer to become more
            protocol agnostic. */
-        int fillcount;
+        size_t fillcount;
         struct HTTP *http = k->protop;
 
         if((k->exp100 == EXP100_SENDING_REQUEST) &&
@@ -964,7 +965,7 @@ static CURLcode readwrite_upload(struct Curl_easy *data,
         if(result)
           return result;
 
-        nread = (ssize_t)fillcount;
+        nread = fillcount;
       }
       else
         nread = 0; /* we're done uploading/reading */
